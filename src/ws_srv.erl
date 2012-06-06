@@ -11,12 +11,16 @@
 %                   -> spawn        -> spawn　
 %                   -> accept       -> interact (client)
 
--module(server).
--export([start/0]).
+-module(ws_srv).
+
+-export([start_link/0, main/1]).
+
 -mode(compile).
 
-start() ->
-    spawn(fun() -> start(fun interact/2, 0) end).
+start_link() ->
+    Pid = spawn_link(fun() -> start(fun interact/2, 0) end),
+    io:format("~p spawned ~p~n", [self(), Pid]),
+    {ok, Pid}.
 
 main(_Args) ->
     start(fun interact/2, 0).
@@ -51,8 +55,7 @@ wait(Socket, F, State0) ->
             List = [list_to_tuple(binary:split(Line, <<": ">>)) || Line <- Lines, binary:match(Line, <<": ">>) /= nomatch],
             % parse in text mode
             % List = [list_to_tuple(re:split(Line, ": ", [{return, list}])) || Line <- string:tokens(Data, "\r\n"), string:str(Line, ": ") > 0],
-            Dict = dict:from_list(List),
-            Key = dict:fetch(<<"Sec-WebSocket-Key">>, Dict),
+            {_, Key} = lists:keyfind(<<"Sec-WebSocket-Key">>, 1, List),
             io:format("Key ~p~n", [Key]),
             Sha1 = crypto:sha([Key, <<"258EAFA5-E914-47DA-95CA-C5AB0DC85B11">>]),
             Base64 = base64:encode(Sha1),
