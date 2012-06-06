@@ -1,4 +1,4 @@
-#! /usr/bin/env escript
+%! /usr/bin/env escript
 
 % Jun.5 2012
 %
@@ -12,7 +12,11 @@
 %                   -> accept       -> interact (client)
 
 -module(server).
+-export([start/0]).
 -mode(compile).
+
+start() ->
+    spawn(fun() -> start(fun interact/2, 0) end).
 
 main(_Args) ->
     start(fun interact/2, 0).
@@ -20,11 +24,14 @@ main(_Args) ->
 interact(Browser, State) ->
     receive
         {browser, Browser, Str} ->
-            Str1 = lists:reverse(Str),
-            Browser ! {send, "out ! " ++ Str1},
+            Str1 = lists:reverse(unicode:characters_to_list(Str)),
+            Msg = unicode:characters_to_binary("out ! " ++ Str1),
+            io:format("send: ~ts~n", [Msg]),
+            Browser ! {send, Msg},
             interact(Browser, State)
     after 100 ->
-        Browser ! {send, "clock ! tick " ++ integer_to_list(State)},
+        Msg = list_to_binary("clock ! tick " ++ integer_to_list(State)),
+        Browser ! {send, Msg},
         interact(Browser, State + 1)
     end.
 
@@ -74,7 +81,7 @@ loop(Socket, Pid) ->
         {send, Data} ->
             % len >= 126 is not handled
             % fin: yes, _rsv, op: text, mask: no, size, data
-            Frame = <<1:1, 0:3, 1:4, 0:1, (length(Data)):7, (list_to_binary(Data))/binary>>,
+            Frame = <<1:1, 0:3, 1:4, 0:1, (size(Data)):7, Data/binary>>,
             % io:format("send ~p~n", [Frame]),
             gen_tcp:send(Socket, Frame),
             loop(Socket, Pid);
@@ -110,8 +117,8 @@ handle_data(Data, Socket, Pid) ->
     % len >= 126 is not handled
     <<Masking:4/binary, Payload:Len/binary, Next/binary>> = Rest,
     io:format("fin ~p op ~p len ~p masked ~p key ~w data ~w~n", [Fin, Opcode, Len, Mask, Masking, Payload]),
-    Line = binary_to_list(unmask(Payload, Masking)),
-    io:format("unmask ~p~n", [Line]),
+    Line = unmask(Payload, Masking),
+    io:format("unmask ~ts ~w~n", [Line, Line]),
     Pid ! {browser, self(), Line},
     case size(Next) of
         0 -> loop(Socket, Pid);
