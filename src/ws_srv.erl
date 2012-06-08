@@ -40,7 +40,9 @@ interact(Browser, State) ->
     end.
 
 start(F, State0) ->
-    {ok, Listen} = gen_tcp:listen(1234, [binary, {packet, 0}, {reuseaddr, true}, {active, true}]),
+    Port = 5000, % list_to_integer(os:getenv("PORT")),
+    io:format("listen on ~p~n", [Port]),
+    {ok, Listen} = gen_tcp:listen(Port, [binary, {packet, 0}, {reuseaddr, true}, {active, true}]),
     par_connect(Listen, F, State0).
 
 par_connect(Listen, F, State0) ->

@@ -6,7 +6,7 @@ $(document).ready(function() {
 	var ws;
 	if ("WebSocket" in window) {
 		debug("Horray you have web sockets\nTrying to connect...");
-		ws = new WebSocket("ws://localhost:1234");
+		ws = new WebSocket("ws://localhost:5000");
 
 		ws.onopen = function() {
 			// Web Socket is connected. You can send data by send() method.
