@@ -1,11 +1,4 @@
 %! /usr/bin/env escript
-
-% Jun.5 2012
-%
-% http://stackoverflow.com/questions/2153294/python-example-of-joes-erlang-websocket-example
-% http://armstrongonsoftware.blogspot.com/2009/12/comet-is-dead-long-live-websockets.html
-% http://tools.ietf.org/html/rfc6455#page-28
-%
 %
 % main -> listen -> accept -> wait (handshake) -> loop (protocol encapsulation)
 %                   -> spawn        -> spawn　
